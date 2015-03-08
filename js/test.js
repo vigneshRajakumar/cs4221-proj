@@ -2,13 +2,13 @@ var graph = new joint.dia.Graph;
 //buttons
 var addEntityButton = $("#addEntity");
 var addRelationButton = $("#addRelation");
-var addAttribute = $('#addAttribute');
+var addAttributeButton = $('#addAttribute');
 
 var elementArray = new Array();
 
 var paper = new joint.dia.Paper({
     el: $('#myholder'),
-    width: 800,
+    width: 1600,
     height: 600,
     model: graph,
     gridSize: 1
@@ -27,6 +27,8 @@ var link = function(elm1, elm2) {
     graph.addCell(myLink);
     return myLink;
 };
+
+
 
 paper.on('cell:pointerclick', 
     function(cellView, evt, x, y) { 
@@ -56,7 +58,20 @@ addRelationButton.click(function() {
         }
     }
     elementArray.push(elementToPush);
-})
+});
+
+addAttributeButton.click(function() {
+    var elementToPush = element(erd.Normal,300,200, $('#textInput').val());
+    elementToPush.isSelected = false;
+    for (var i=0; i<elementArray.length; i++) {
+        console.log(elementArray[i])
+        if(elementArray[i].isSelected) {        
+            link(elementArray[i],elementToPush);
+            break;
+        }
+    }
+    elementArray.push(elementToPush);
+});
 
 //-----------below this is demo code
 /*

@@ -14,15 +14,30 @@
 		</div>
 	</div>
 	<div class="row">
+		<div class="col-md-0.5">
+			<b>NAME: <i>(of entities, relations or attributes)</i></b>
+		</div>
 		<div class="col-md-4">
-			<input type="text" id="textInput" class="form-control">
+			<input type="text" id="NameInput" class="form-control">
 		</div>
 		<div class="col-md-4">
 			<button type="button" class="btn btn-primary" id="addEntity">Entity</button>
 			<button type="button" class="btn btn-primary" id="addRelation">Relation</button>
 			<button type="button" class="btn btn-primary" id="addAttribute">Attribute</button>
 		</div>
-	</div>	
+	</div>
+
+	<div class="row">
+		<div class="col-md-0.5">
+			<b>CARDINALITY: <i>(for links)</i></b>
+		</div>
+		<div class="col-md-1">
+			<input type="text" id="CardInput" class="form-control">
+		</div>
+		<div class="col-md-1">
+			<button type="button" class="btn btn-primary" id="addCard">Add Cardinality</button>
+		</div>
+	</div>		
 </div>
 </body>
 <script src="../js/joint.min.js"></script>

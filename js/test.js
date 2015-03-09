@@ -3,8 +3,10 @@ var graph = new joint.dia.Graph;
 var addEntityButton = $("#addEntity");
 var addRelationButton = $("#addRelation");
 var addAttributeButton = $('#addAttribute');
+var addCardButton = $('#addCard');
 
 var elementArray = new Array();
+var linkArray = new Array();
 
 var paper = new joint.dia.Paper({
     el: $('#myholder'),
@@ -25,6 +27,7 @@ var element = function(elm,x,y,label) {
 var link = function(elm1, elm2) {
     var myLink = new erd.Line({ source: { id: elm1.id }, target: { id: elm2.id }});
     graph.addCell(myLink);
+    linkArray.push(myLink)
     return myLink;
 };
 
@@ -43,13 +46,13 @@ paper.on('cell:pointerclick',
 );
 
 addEntityButton.click(function() {
-    var elementToPush = element(erd.Entity,100,200,$('#textInput').val());
+    var elementToPush = element(erd.Entity,100,200,$('#NameInput').val());
     elementToPush.isSelected = false;
     elementArray.push(elementToPush);
 });
 
 addRelationButton.click(function() {
-    var elementToPush = element(erd.Relationship,200,200, $('#textInput').val());
+    var elementToPush = element(erd.Relationship,200,200, $('#NameInput').val());
     elementToPush.isSelected = false;
     for (var i=0; i<elementArray.length; i++) {
         console.log(elementArray[i])
@@ -61,7 +64,7 @@ addRelationButton.click(function() {
 });
 
 addAttributeButton.click(function() {
-    var elementToPush = element(erd.Normal,300,200, $('#textInput').val());
+    var elementToPush = element(erd.Normal,300,200, $('#NameInput').val());
     elementToPush.isSelected = false;
     for (var i=0; i<elementArray.length; i++) {
         console.log(elementArray[i])
@@ -72,6 +75,17 @@ addAttributeButton.click(function() {
     }
     elementArray.push(elementToPush);
 });
+
+addCardButton.click(function() {
+    for (var i=0; i<linkArray.length; i++){
+        console.log(linkArray[i]);
+        if(linkArray[i].isSelected){
+            var cardInput = $('#CardInput').val()
+            linkArray[i].cardinality(cardInput);
+        }
+    }
+});
+
 
 //-----------below this is demo code
 /*

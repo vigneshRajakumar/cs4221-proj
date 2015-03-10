@@ -4,6 +4,7 @@ var addEntityButton = $("#addEntity");
 var addRelationButton = $("#addRelation");
 var addAttributeButton = $('#addAttribute');
 var addCardButton = $('#addCard');
+var toSQLButton = $('#toSQL');
 
 var elementArray = new Array();
 var linkArray = new Array();
@@ -86,6 +87,11 @@ addCardButton.click(function() {
     }
 });
 
+toSQLButton.click(function() {
+    //This function now converts to JSON. Later have to generate SQL from this
+    var js = JSON.stringify(graph.toJSON());
+    console.log(js);
+});
 
 //-----------below this is demo code
 /*

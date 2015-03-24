@@ -5,6 +5,7 @@ var addRelationButton = $("#addRelation");
 var addAttributeButton = $('#addAttribute');
 var addCardButton = $('#addCard');
 var toSQLButton = $('#toSQL');
+var addPrimaryKeyButton = $('#addPKey');
 
 var elementArray = new Array();
 var linkArray = new Array();
@@ -91,6 +92,19 @@ addRelationButton.click(function() {
 
 addAttributeButton.click(function() {
     var elementToPush = element(erd.Normal,300,200, $('#NameInput').val());
+    elementToPush.isSelected = false;
+    for (var i=0; i<elementArray.length; i++) {
+        console.log(elementArray[i])
+        if(elementArray[i].isSelected) {        
+            link(elementArray[i],elementToPush);
+            break;
+        }
+    }
+    elementArray.push(elementToPush);
+});
+
+addPrimaryKeyButton.click(function() {
+    var elementToPush = element(erd.Key,300,200, $('#NameInput').val());
     elementToPush.isSelected = false;
     for (var i=0; i<elementArray.length; i++) {
         console.log(elementArray[i])

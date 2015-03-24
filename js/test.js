@@ -113,7 +113,55 @@ addCardButton.click(function() {
 });
 
 toSQLButton.click(function() {
+	var sqlQuery = "";
+	
+    for	(i = 0; i < elementArray.length; i++) {
+		if(elementArray[i].attributes.type == "erd.Entity"){
+			var ent_id = elementArray[i].attributes.id;
+			var table_name = removeSpace(elementArray[i].attributes.attrs.text.text);
+			var table_fields = "";
+			
+			for (j = 0; j < linkArray.length; j++){
+				if(linkArray[j].attributes.source.id == ent_id){
+					for(k = 0; k < elementArray.length; k++) { 
+						if(elementArray[k].attributes.id == linkArray[j].attributes.target.id && elementArray[k].attributes.type == "erd.Normal"){
+							table_fields += removeSpace(elementArray[k].attributes.attrs.text.text);
+							table_fields += " varchar(255), ";
+						}
+					}
+				}
+				else if(linkArray[j].attributes.target.id == ent_id) {
+					for(k = 0; k < elementArray.length; k++) { 
+						if(elementArray[k].attributes.id == linkArray[j].attributes.source.id && elementArray[k].attributes.type == "erd.Normal"){
+							table_fields += removeSpace(elementArray[k].attributes.attrs.text.text);
+							table_fields += " varchar(255), ";
+						}
+					}
+				}
+			}
+			
+			sqlQuery += "CREATE TABLE " + table_name;
+			
+			if(table_fields.length != 0){
+				table_fields = table_fields.slice(0, table_fields.length-2);
+				sqlQuery += "(" + table_fields + ")";
+			}
+			
+			sqlQuery += ";"
+			
+			console.log(sqlQuery);
+		}
+	}
+    for	(index = 0; index < linkArray.length; index++) {
+		console.log(linkArray[index].attributes.type);
+	}
+	
     //This function now converts to JSON. Later have to generate SQL from this
     var js = JSON.stringify(graph.toJSON());
     console.log(js);
 });
+
+function removeSpace(inputString){
+	return inputString.replace(" ", "_");
+};
+

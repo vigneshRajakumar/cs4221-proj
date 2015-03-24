@@ -6,6 +6,7 @@ var addAttributeButton = $('#addAttribute');
 var addCardButton = $('#addCard');
 var toSQLButton = $('#toSQL');
 var addPrimaryKeyButton = $('#addPKey');
+var removeButton = $('#remove');
 
 var elementArray = new Array();
 var linkArray = new Array();
@@ -123,6 +124,21 @@ addCardButton.click(function() {
             var cardInput = $('#CardInput').val()
             linkArray[i].cardinality(cardInput);
         }
+    }
+});
+
+removeButton.click(function() {
+    for (var i=0; i<linkArray.length; i++){
+        if(linkArray[i].isSelected){
+            linkArray[i].remove();
+        }
+        console.log(linkArray[i]);
+    }
+    for (var i=0; i<elementArray.length; i++) {
+        if(elementArray[i].isSelected) {
+            elementArray[i].remove();
+        }
+        console.log(elementArray[i]);
     }
 });
 

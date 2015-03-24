@@ -46,6 +46,31 @@ paper.on('cell:pointerclick',
     }
 );
 
+paper.on('cell:pointerup', function(cellView, evt, x, y) {
+
+    // Find the first element below that is not a link nor the dragged element itself.
+    var elementBelow = graph.get('cells').find(function(cell) {
+        if (cell instanceof joint.dia.Link) return false; // Not interested in links.
+        if (cell.id === cellView.model.id) return false; // The same element as the dropped one.
+        if (cell.getBBox().containsPoint(g.point(x, y))) {
+            return true;
+        }
+        return false;
+    });
+    
+    // If the two elements are connected already, don't
+    // connect them again (this is application specific though).
+    if (elementBelow && !_.contains(graph.getNeighbors(elementBelow), cellView.model)) {
+        
+        graph.addCell(new erd.Line({
+            source: { id: cellView.model.id }, target: { id: elementBelow.id }//,
+            //attrs: { '.marker-source': { d: 'M 10 0 L 0 5 L 10 10 z' } }
+        }));
+        // Move the element a bit to the side.
+        cellView.model.translate(-200, 0);
+    }
+});    
+
 addEntityButton.click(function() {
     var elementToPush = element(erd.Entity,100,200,$('#NameInput').val());
     elementToPush.isSelected = false;
@@ -92,23 +117,3 @@ toSQLButton.click(function() {
     var js = JSON.stringify(graph.toJSON());
     console.log(js);
 });
-
-//-----------below this is demo code
-/*
-var rect = new joint.shapes.basic.Rect({
-    position: { x: 100, y: 30 },
-    size: { width: 100, height: 30 },
-    attrs: { rect: { fill: 'blue' }, text: { text: 'my box', fill: 'white' } }
-});
-
-var rect2 = rect.clone();
-rect2.translate(300);
-
-var link = new joint.dia.Link({
-    source: { id: rect.id },
-    target: { id: rect2.id }
-});
-
-
-
-graph.addCells([rect, rect2, link]);*/

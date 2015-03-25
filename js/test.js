@@ -10,6 +10,8 @@ var removeButton = $('#remove');
 
 var elementArray = new Array();
 var linkArray = new Array();
+var keyArray = new Array();
+var keyListArray = new Array();
 
 var paper = new joint.dia.Paper({
     el: $('#myholder'),
@@ -30,11 +32,19 @@ var element = function(elm,x,y,label) {
 var link = function(elm1, elm2) {
     var myLink = new erd.Line({ source: { id: elm1.id }, target: { id: elm2.id }});
     graph.addCell(myLink);
-    linkArray.push(myLink)
+    linkArray.push(myLink);
     return myLink;
 };
 
+var keyNote = function(id ,table, pKey) {
+    var keyLink = {id: id, table: table, pKey: pKey};
+    keyArray.push(keyLink);
+};
 
+var keyListNote = function(id, pKey) {
+	var keyLink = {id: id, pKey: pKey};
+	keyListArray.push(keyLink);
+}
 
 paper.on('cell:pointerclick', 
     function(cellView, evt, x, y) { 
@@ -137,21 +147,23 @@ removeButton.click(function() {
     for (var i=0; i<linkArray.length; i++){
         if(linkArray[i].isSelected){
             linkArray[i].remove();
+			console.log(linkArray[i]);
         }
-        console.log(linkArray[i]);
     }
     for (var i=0; i<elementArray.length; i++) {
         if(elementArray[i].isSelected) {
             elementArray[i].remove();
+			console.log(elementArray[i]);
         }
-        console.log(elementArray[i]);
     }
 });
 
 toSQLButton.click(function() {
+	var sqlQuery = "";
+	keyArray.length = 0;
+	keyListArray.length = 0;
+		
     for	(i = 0; i < elementArray.length; i++) {
-		var sqlQuery = "";
-	
 		if(elementArray[i].attributes.type == "erd.Entity"){
 			var ent_id = elementArray[i].attributes.id;
 			var table_name = removeSpace(elementArray[i].attributes.attrs.text.text);
@@ -159,6 +171,103 @@ toSQLButton.click(function() {
 			var ifPKey = false;
 			var pKey = "";
 			
+			for (j = 0; j < linkArray.length; j++){
+				if(linkArray[j].attributes.source.id == ent_id){
+					for(k = 0; k < elementArray.length; k++) { 
+						console.log(elementArray[k].attributes.type);
+						if(elementArray[k].attributes.id == linkArray[j].attributes.target.id && elementArray[k].attributes.type == "erd.Normal"){
+							table_fields += removeSpace(elementArray[k].attributes.attrs.text.text);
+							table_fields += " varchar(255), ";
+						}
+						
+						else if(elementArray[k].attributes.id == linkArray[j].attributes.target.id && elementArray[k].attributes.type == "erd.Key"){
+							table_fields += removeSpace(elementArray[k].attributes.attrs.text.text);
+							table_fields += " varchar(255), ";
+							ifPKey = true;
+							pKey += removeSpace(elementArray[k].attributes.attrs.text.text) + ", ";
+							keyListNote(ent_id, removeSpace(elementArray[k].attributes.attrs.text.text));
+						}
+					}
+				}
+				else if(linkArray[j].attributes.target.id == ent_id) {
+					for(k = 0; k < elementArray.length; k++) { 
+						console.log(elementArray[k].attributes.type);
+						if(elementArray[k].attributes.id == linkArray[j].attributes.source.id && elementArray[k].attributes.type == "erd.Normal"){
+							table_fields += removeSpace(elementArray[k].attributes.attrs.text.text);
+							table_fields += " varchar(255), ";
+						}
+						
+						else if(elementArray[k].attributes.id == linkArray[j].attributes.source.id && elementArray[k].attributes.type == "erd.Key"){
+							table_fields += removeSpace(elementArray[k].attributes.attrs.text.text);
+							table_fields += " varchar(255), ";
+							ifPKey = true;
+							pKey += removeSpace(elementArray[k].attributes.attrs.text.text) + ", ";
+							keyListNote(ent_id, removeSpace(elementArray[k].attributes.attrs.text.text));
+						}
+					}
+				}
+			}
+			
+			sqlQuery += "CREATE TABLE " + table_name;
+			
+			if(table_fields.length != 0){
+				table_fields = table_fields.slice(0, table_fields.length-2);
+				sqlQuery += "(" + table_fields;
+				
+				if(ifPKey){
+					pKey = pKey.slice(0, pKey.length-2); 
+					sqlQuery += ", PRIMARY KEY (" + pKey + ")";
+					keyNote(ent_id, table_name, pKey);
+				}
+				
+				sqlQuery += ")";
+			}
+			
+			sqlQuery += ";"
+		}
+	}
+	
+	for	(i = 0; i < elementArray.length; i++) {
+		if(elementArray[i].attributes.type == "erd.Relationship"){
+			var ent_id = elementArray[i].attributes.id;
+			var table_name = removeSpace(elementArray[i].attributes.attrs.text.text);
+			var table_fields = "";
+			var fKey = "";
+			var ifPKey = false;
+			var pKey = "";
+			
+			for (j = 0; j < linkArray.length; j++){
+				if(linkArray[j].attributes.source.id == ent_id){
+					for(k = 0; k < keyArray.length; k++) { 
+						if(keyArray[k].id == linkArray[j].attributes.target.id){
+							fKey += "FOREIGN KEY(" + keyArray[k].pKey + ") REFERENCES " + keyArray[k].table + "(" + keyArray[k].pKey + "), ";
+							for(l = 0; l < keyListArray.length; l++){
+								if(keyListArray[l].id === linkArray[j].attributes.target.id){
+									table_fields += keyListArray[l].pKey;
+									table_fields += " varchar(255), ";
+								}
+							}
+						}
+					}
+				}
+				else if(linkArray[j].attributes.target.id == ent_id) {
+					for(k = 0; k < keyArray.length; k++) { 
+						if(keyArray[k].id == linkArray[j].attributes.source.id){
+							fKey += "FOREIGN KEY(" + keyArray[k].pKey + ") REFERENCES " + keyArray[k].table + "(" + keyArray[k].pKey + "), ";
+							for(l = 0; l < keyListArray.length; l++){
+								if(keyListArray[l].id === linkArray[j].attributes.source.id){
+									table_fields += keyListArray[l].pKey;
+									table_fields += " varchar(255), ";
+								}
+							}
+						}
+					}
+				}
+			}
+			
+			if(fKey === "")
+				break;
+				
 			for (j = 0; j < linkArray.length; j++){
 				if(linkArray[j].attributes.source.id == ent_id){
 					for(k = 0; k < elementArray.length; k++) { 
@@ -205,60 +314,28 @@ toSQLButton.click(function() {
 					sqlQuery += ", PRIMARY KEY (" + pKey + ")";
 				}
 				
+				fKey = fKey.slice(0, fKey.length-2); 
+				sqlQuery += ", " + fKey;
 				sqlQuery += ")";
 			}
 			
 			sqlQuery += ";"
-			
-			var textToWrite = sqlQuery;
-			var textFileAsBlob = new Blob([textToWrite], {type:'text/plain'});
-			var fileNameToSaveAs = "sqlQuery.txt";
-			var downloadLink = document.createElement("a");
-			downloadLink.download = fileNameToSaveAs;
-			downloadLink.innerHTML = "My Hidden Link";
-			
-			window.URL = window.URL || window.webkitURL;
-			downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
-			downloadLink.onclick = destroyClickedElement;
-			downloadLink.style.display = "none";
-			document.body.appendChild(downloadLink);
-			downloadLink.click();
 		}
+	}
 		
-		else if(elementArray[i].attributes.type == "erd.Relationship"){
-			var ent_id = elementArray[i].attributes.id;
-			var table_name = removeSpace(elementArray[i].attributes.attrs.text.text);
-			var table_fields = "";
-			
-			for (j = 0; j < linkArray.length; j++){
-				if(linkArray[j].attributes.source.id == ent_id){
-					/*for(k = 0; k < elementArray.length; k++) { 
-						if(elementArray[k].attributes.id == linkArray[j].attributes.target.id && elementArray[k].attributes.type == "erd.Normal"){
-							table_fields += removeSpace(elementArray[k].attributes.attrs.text.text);
-							table_fields += " varchar(255), ";
-						}
-					}*/
-					console.log(linkArray[j].attributes);
-				}
-				else if(linkArray[j].attributes.target.id == ent_id) {
-					/*for(k = 0; k < elementArray.length; k++) { 
-						if(elementArray[k].attributes.id == linkArray[j].attributes.source.id && elementArray[k].attributes.type == "erd.Normal"){
-							table_fields += removeSpace(elementArray[k].attributes.attrs.text.text);
-							table_fields += " varchar(255), ";
-						}
-					}*/
-					console.log(linkArray[j].attributes);
-				}
-			}
-		}
-	}
-    for	(index = 0; index < linkArray.length; index++) {
-		console.log(linkArray[index].attributes.type);
-	}
+	var textToWrite = sqlQuery;
+	var textFileAsBlob = new Blob([textToWrite], {type:'text/plain'});
+	var fileNameToSaveAs = "sqlQuery.txt";
+	var downloadLink = document.createElement("a");
+	downloadLink.download = fileNameToSaveAs;
+	downloadLink.innerHTML = "My Hidden Link";
 	
-    //This function now converts to JSON. Later have to generate SQL from this
-    var js = JSON.stringify(graph.toJSON());
-    console.log(js);
+	window.URL = window.URL || window.webkitURL;
+	downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
+	downloadLink.onclick = destroyClickedElement;
+	downloadLink.style.display = "none";
+	document.body.appendChild(downloadLink);
+	downloadLink.click();
 });
 
 function removeSpace(inputString){

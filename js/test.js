@@ -55,7 +55,7 @@ paper.on('cell:pointerup', function(cellView, evt, x, y) {
         if (cell instanceof joint.dia.Link) return false; // Not interested in links.
         if (cell.attributes.type != "erd.Entity") return false; // Not interested in anything except entities.
         if (cell.id === cellView.model.id) return false; // The same element as the dropped one.
-		if (cellView.model.attributes.type == "erd.Normal" || cell.attributes.type == "erd.Key"){
+		if (cellView.model.attributes.type == "erd.Normal" || cellView.model.attributes.type == "erd.Key"){
 			for (var i = 0; i < linkArray.length; i++){	
 				if (linkArray[i].attributes.target.id == cellView.model.id || linkArray[i].attributes.source.id == cellView.model.id)
 					return false;
@@ -102,7 +102,7 @@ addAttributeButton.click(function() {
     var elementToPush = element(erd.Normal,300,200, $('#NameInput').val());
     elementToPush.isSelected = false;
     for (var i=0; i<elementArray.length; i++) {
-        if(elementArray[i].isSelected && elementArray[i].attributes.type == "erd.Entity") {        
+        if(elementArray[i].isSelected && (elementArray[i].attributes.type == "erd.Entity" || elementArray[i].attributes.type == "erd.Relationship")) {        
             link(elementArray[i],elementToPush);
             break;
         }

@@ -53,7 +53,14 @@ paper.on('cell:pointerup', function(cellView, evt, x, y) {
     // Find the first element below that is not a link nor the dragged element itself.
     var elementBelow = graph.get('cells').find(function(cell) {
         if (cell instanceof joint.dia.Link) return false; // Not interested in links.
+        if (cell.attributes.type != "erd.Entity") return false; // Not interested in anything except entities.
         if (cell.id === cellView.model.id) return false; // The same element as the dropped one.
+		if (cellView.model.attributes.type == "erd.Normal" || cell.attributes.type == "erd.Key"){
+			for (var i = 0; i < linkArray.length; i++){	
+				if (linkArray[i].attributes.target.id == cellView.model.id || linkArray[i].attributes.source.id == cellView.model.id)
+					return false;
+			}
+		}
         if (cell.getBBox().containsPoint(g.point(x, y))) {
             return true;
         }
@@ -68,8 +75,9 @@ paper.on('cell:pointerup', function(cellView, evt, x, y) {
             source: { id: cellView.model.id }, target: { id: elementBelow.id }//,
             //attrs: { '.marker-source': { d: 'M 10 0 L 0 5 L 10 10 z' } }
         }));
+		link(cellView.model,elementBelow);
         // Move the element a bit to the side.
-        cellView.model.translate(-200, 0);
+        cellView.model.translate(-50, 0);
     }
 });    
 
@@ -83,8 +91,7 @@ addRelationButton.click(function() {
     var elementToPush = element(erd.Relationship,200,200, $('#NameInput').val());
     elementToPush.isSelected = false;
     for (var i=0; i<elementArray.length; i++) {
-        console.log(elementArray[i])
-        if(elementArray[i].isSelected) {        
+        if(elementArray[i].isSelected && elementArray[i].attributes.type == "erd.Entity") {        
             link(elementArray[i],elementToPush);
         }
     }
@@ -95,8 +102,7 @@ addAttributeButton.click(function() {
     var elementToPush = element(erd.Normal,300,200, $('#NameInput').val());
     elementToPush.isSelected = false;
     for (var i=0; i<elementArray.length; i++) {
-        console.log(elementArray[i])
-        if(elementArray[i].isSelected) {        
+        if(elementArray[i].isSelected && elementArray[i].attributes.type == "erd.Entity") {        
             link(elementArray[i],elementToPush);
             break;
         }
@@ -109,7 +115,7 @@ addPrimaryKeyButton.click(function() {
     elementToPush.isSelected = false;
     for (var i=0; i<elementArray.length; i++) {
         console.log(elementArray[i])
-        if(elementArray[i].isSelected) {        
+        if(elementArray[i].isSelected && elementArray[i].attributes.type == "erd.Entity") {        
             link(elementArray[i],elementToPush);
             break;
         }
@@ -143,28 +149,46 @@ removeButton.click(function() {
 });
 
 toSQLButton.click(function() {
-	var sqlQuery = "";
-	
     for	(i = 0; i < elementArray.length; i++) {
+		var sqlQuery = "";
+	
 		if(elementArray[i].attributes.type == "erd.Entity"){
 			var ent_id = elementArray[i].attributes.id;
 			var table_name = removeSpace(elementArray[i].attributes.attrs.text.text);
 			var table_fields = "";
+			var ifPKey = false;
+			var pKey = "";
 			
 			for (j = 0; j < linkArray.length; j++){
 				if(linkArray[j].attributes.source.id == ent_id){
 					for(k = 0; k < elementArray.length; k++) { 
+						console.log(elementArray[k].attributes.type);
 						if(elementArray[k].attributes.id == linkArray[j].attributes.target.id && elementArray[k].attributes.type == "erd.Normal"){
 							table_fields += removeSpace(elementArray[k].attributes.attrs.text.text);
 							table_fields += " varchar(255), ";
+						}
+						
+						else if(elementArray[k].attributes.id == linkArray[j].attributes.target.id && elementArray[k].attributes.type == "erd.Key"){
+							table_fields += removeSpace(elementArray[k].attributes.attrs.text.text);
+							table_fields += " varchar(255), ";
+							ifPKey = true;
+							pKey += removeSpace(elementArray[k].attributes.attrs.text.text) + ", ";
 						}
 					}
 				}
 				else if(linkArray[j].attributes.target.id == ent_id) {
 					for(k = 0; k < elementArray.length; k++) { 
+						console.log(elementArray[k].attributes.type);
 						if(elementArray[k].attributes.id == linkArray[j].attributes.source.id && elementArray[k].attributes.type == "erd.Normal"){
 							table_fields += removeSpace(elementArray[k].attributes.attrs.text.text);
 							table_fields += " varchar(255), ";
+						}
+						
+						else if(elementArray[k].attributes.id == linkArray[j].attributes.source.id && elementArray[k].attributes.type == "erd.Key"){
+							table_fields += removeSpace(elementArray[k].attributes.attrs.text.text);
+							table_fields += " varchar(255), ";
+							ifPKey = true;
+							pKey += removeSpace(elementArray[k].attributes.attrs.text.text) + ", ";
 						}
 					}
 				}
@@ -174,12 +198,58 @@ toSQLButton.click(function() {
 			
 			if(table_fields.length != 0){
 				table_fields = table_fields.slice(0, table_fields.length-2);
-				sqlQuery += "(" + table_fields + ")";
+				sqlQuery += "(" + table_fields;
+				
+				if(ifPKey){
+					pKey = pKey.slice(0, pKey.length-2); 
+					sqlQuery += ", PRIMARY KEY (" + pKey + ")";
+				}
+				
+				sqlQuery += ")";
 			}
 			
 			sqlQuery += ";"
 			
-			console.log(sqlQuery);
+			var textToWrite = sqlQuery;
+			var textFileAsBlob = new Blob([textToWrite], {type:'text/plain'});
+			var fileNameToSaveAs = "sqlQuery.txt";
+			var downloadLink = document.createElement("a");
+			downloadLink.download = fileNameToSaveAs;
+			downloadLink.innerHTML = "My Hidden Link";
+			
+			window.URL = window.URL || window.webkitURL;
+			downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
+			downloadLink.onclick = destroyClickedElement;
+			downloadLink.style.display = "none";
+			document.body.appendChild(downloadLink);
+			downloadLink.click();
+		}
+		
+		else if(elementArray[i].attributes.type == "erd.Relationship"){
+			var ent_id = elementArray[i].attributes.id;
+			var table_name = removeSpace(elementArray[i].attributes.attrs.text.text);
+			var table_fields = "";
+			
+			for (j = 0; j < linkArray.length; j++){
+				if(linkArray[j].attributes.source.id == ent_id){
+					/*for(k = 0; k < elementArray.length; k++) { 
+						if(elementArray[k].attributes.id == linkArray[j].attributes.target.id && elementArray[k].attributes.type == "erd.Normal"){
+							table_fields += removeSpace(elementArray[k].attributes.attrs.text.text);
+							table_fields += " varchar(255), ";
+						}
+					}*/
+					console.log(linkArray[j].attributes);
+				}
+				else if(linkArray[j].attributes.target.id == ent_id) {
+					/*for(k = 0; k < elementArray.length; k++) { 
+						if(elementArray[k].attributes.id == linkArray[j].attributes.source.id && elementArray[k].attributes.type == "erd.Normal"){
+							table_fields += removeSpace(elementArray[k].attributes.attrs.text.text);
+							table_fields += " varchar(255), ";
+						}
+					}*/
+					console.log(linkArray[j].attributes);
+				}
+			}
 		}
 	}
     for	(index = 0; index < linkArray.length; index++) {
@@ -194,4 +264,10 @@ toSQLButton.click(function() {
 function removeSpace(inputString){
 	return inputString.replace(" ", "_");
 };
+
+function destroyClickedElement(event) {
+// remove the link from the DOM
+    document.body.removeChild(event.target);
+}
+
 

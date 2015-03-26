@@ -148,7 +148,9 @@ removeButton.click(function() {
 
     for (var i=0; i<linkArray.length; i++){
         if(linkArray[i].isSelected){
+		 linkArray[i].remove();
 		 linkArray.splice(i,1);
+		
         }
     }
 	
@@ -160,11 +162,15 @@ removeButton.click(function() {
 					for(var k=0;k<elementArray.length;k++){
 						if((elementArray[k].attributes.type=="erd.Normal")&&(elementArray[k].attributes.id==linkArray[j].attributes.source.id))
 						{
+							elementArray[k].remove();
 							elementArray.splice(k,1);
+							
 						}
 					}
 				}
+				linkArray[j].remove();
 				linkArray.splice(j,1);
+				
 				j=-1;
 			}
 			else if(linkArray[j].attributes.source.id== elementArray[i].attributes.id){
@@ -172,15 +178,21 @@ removeButton.click(function() {
 					for(var k=0;k<elementArray.length;k++){
 						if((elementArray[k].attributes.type=="erd.Normal")&&(elementArray[k].attributes.id==linkArray[j].attributes.target.id))
 						{
+							elementArray[k].remove();
 							elementArray.splice(k,1);
+							
 						}
 					}
 				}
+				linkArray[j].remove();
 				linkArray.splice(j,1);
+				
 				j=-1;
 			}
 		 }
+		 elementArray[i].remove();
          elementArray.splice(i,1);
+		 
         }
     }
 });

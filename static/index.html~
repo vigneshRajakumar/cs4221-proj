@@ -45,5 +45,5 @@
 <script src="../js/joint.min.js"></script>
 <script src="../js/joint.shapes.erd.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
-<script src="../js/test.js"></script>
+<script src="../js/test1.js"></script>
 </html>

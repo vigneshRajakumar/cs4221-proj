@@ -1,6 +1,7 @@
 var graph = new joint.dia.Graph;
 //buttons
 var addEntityButton = $("#addEntity");
+var addWeakEntityButton = $("#addWeakEntity");
 var addRelationButton = $("#addRelation");
 var addAttributeButton = $('#addAttribute');
 var addCardButton = $('#addCard');
@@ -108,11 +109,17 @@ addEntityButton.click(function() {
     elementArray.push(elementToPush);
 });
 
+addWeakEntityButton.click(function() {
+    var elementToPush = element(erd.WeakEntity,100,200,$('#NameInput').val());
+    elementToPush.isSelected = false;
+    elementArray.push(elementToPush);
+});
+
 addRelationButton.click(function() {
     var elementToPush = element(erd.Relationship,200,200, $('#NameInput').val());
     elementToPush.isSelected = false;
     for (var i=0; i<elementArray.length; i++) {
-        if(elementArray[i].isSelected && elementArray[i].attributes.type == "erd.Entity") {
+        if(elementArray[i].isSelected && elementArray[i].attributes.type == "erd.Entity" && elementArray[i].attributes.type == "erd.WeakEntity") {
             link(elementArray[i],elementToPush);
         }
     }
@@ -168,7 +175,7 @@ removeButton.click(function() {
         if(elementArray[i].isSelected) {
 		 for (var j=0; j<linkArray.length; j++){
 			if((linkArray[j].attributes.target.id == elementArray[i].attributes.id)||(linkArray[j].attributes.source.id== elementArray[i].attributes.id)){
-				if((elementArray[i].attributes.type == "erd.Entity")||(elementArray[i].attributes.type=="erd.Relationship")){
+				if((elementArray[i].attributes.type == "erd.Entity") || (elementArray[i].attributes.type == "erd.WeakEntity")||(elementArray[i].attributes.type=="erd.Relationship")){
 					for(var k=0;k<elementArray.length;k++){
 						if((elementArray[k].attributes.type=="erd.Normal")&&(elementArray[k].attributes.id==linkArray[j].attributes.source.id))
 						{
@@ -184,7 +191,7 @@ removeButton.click(function() {
 				j=-1;
 			}
 			else if(linkArray[j].attributes.source.id== elementArray[i].attributes.id){
-				if((elementArray[i].attributes.type == "erd.Entity")||(elementArray[i].attributes.type=="erd.Relationship")){
+				if((elementArray[i].attributes.type == "erd.Entity") || (elementArray[i].attributes.type == "erd.WeakEntity") || (elementArray[i].attributes.type == "erd.WeakEntity")||(elementArray[i].attributes.type=="erd.Relationship")){
 					for(var k=0;k<elementArray.length;k++){
 						if((elementArray[k].attributes.type=="erd.Normal")&&(elementArray[k].attributes.id==linkArray[j].attributes.target.id))
 						{
@@ -213,7 +220,7 @@ toSQLButton.click(function() {
 	keyListArray.length = 0;
 
     for	(i = 0; i < elementArray.length; i++) {
-		if(elementArray[i].attributes.type == "erd.Entity"){
+		if(elementArray[i].attributes.type == "erd.Entity") || (elementArray[i].attributes.type == "erd.WeakEntity") || (elementArray[i].attributes.type == "erd.WeakEntity"){
 			var ent_id = elementArray[i].attributes.id;
 			var table_name = removeSpace(elementArray[i].attributes.attrs.text.text);
 			var table_fields = "";
